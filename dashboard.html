@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1>Dashboard</h1>
+    <p>Welcome to the EMR Dashboard. Use the links below to navigate:</p>
+    <ul>
+        <li><a href="{% url 'calendar' %}">View Calendar</a></li>
+        <li><a href="{% url 'patients:list' %}">Manage Patients</a></li>
+        <li><a href="{% url 'billing:list' %}">Billing</a></li>
+        <li><a href="{% url 'teletherapy:list' %}">Teletherapy Sessions</a></li>
+        <li><a href="{% url 'scheduling:list' %}">Scheduling</a></li>
+    </ul>
+</div>
+{% endblock %}

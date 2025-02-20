@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendar{% endblock %}
+
+{% block content %}
+<h1>Appointment Calendar</h1>
+<div id="calendar"></div>
+
+<!-- Import FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        if (!calendarEl) {
+            console.error("Calendar element not found.");
+            return;
+        }
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: '/api/schedules/',
+            editable: true,
+            selectable: true,
+            select: function(info) {
+                let title = prompt("Enter appointment title:");
+                if (title) {
+                    fetch("/api/schedules/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": "{{ csrf_token }}",
+                        },
+                        body: JSON.stringify({
+                            title: title,
+                            start: info.startStr,
+                            status: "pending"
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert("Appointment created!");
+                        calendar.refetchEvents();
+                    })
+                    .catch(error => alert("Error creating appointment"));
+                }
+            },
+            eventClick: function(info) {
+                let updateStatus = confirm("Mark as confirmed?");
+                if (updateStatus) {
+                    fetch(`/api/schedules/${info.event.id}/`, {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": "{{ csrf_token }}",
+                        },
+                        body: JSON.stringify({ status: "confirmed" }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert("Appointment updated!");
+                        calendar.refetchEvents();
+                    })
+                    .catch(error => alert("Error updating appointment"));
+                }
+            },
+            eventDrop: function(info) {
+                fetch(`/api/schedules/${info.event.id}/`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}",
+                    },
+                    body: JSON.stringify({ start: info.event.startStr }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert("Appointment rescheduled!");
+                    calendar.refetchEvents();
+                })
+                .catch(error => alert("Error updating schedule"));
+            }
+        });
+
+        calendar.render();
+    });
+        document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: '/api/schedules/',
+            editable: true,
+            selectable: true,
+            select: function(info) {
+                let title = prompt("Enter appointment title:");
+                if (title) {
+                    fetch("/api/schedules/create/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": "{{ csrf_token }}",
+                        },
+                        body: JSON.stringify({
+                            title: title,
+                            start: info.startStr,
+                            status: "pending"
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Appointment created & synced to Google Calendar!");
+                            calendar.refetchEvents();
+                        } else {
+                            alert("Error syncing with Google Calendar.");
+                        }
+                    })
+                    .catch(error => alert("Error creating appointment"));
+                }
+            }
+        });
+        calendar.render();
+    });
+</script>
+{% endblock %}
